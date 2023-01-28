@@ -11,13 +11,19 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+// 实现Iterable接口,从外部可以直接迭代所有的日志条目元信息
 public class EntryIndexFile implements Iterable<EntryIndexItem> {
 
+    // 最大条目索引的偏移
     private static final long OFFSET_MAX_ENTRY_INDEX = Integer.BYTES;
+    // 单条日志条目元数据的长度
     private static final int LENGTH_ENTRY_INDEX_ITEM = 16;
     private final SeekableFile seekableFile;
+    // 日志条目数
     private int entryIndexCount;
+    // 最小日志索引
     private int minEntryIndex;
+    // 最大日志索引
     private int maxEntryIndex;
     private Map<Integer, EntryIndexItem> entryIndexMap = new HashMap<>();
 
@@ -30,6 +36,7 @@ public class EntryIndexFile implements Iterable<EntryIndexItem> {
         load();
     }
 
+    // 加载所有日志元信息
     private void load() throws IOException {
         if (seekableFile.size() == 0L) {
             entryIndexCount = 0;
@@ -38,6 +45,8 @@ public class EntryIndexFile implements Iterable<EntryIndexItem> {
         minEntryIndex = seekableFile.readInt();
         maxEntryIndex = seekableFile.readInt();
         updateEntryIndexCount();
+
+        // 逐条加载
         long offset;
         int kind;
         int term;
@@ -49,6 +58,7 @@ public class EntryIndexFile implements Iterable<EntryIndexItem> {
         }
     }
 
+    // 更新日志条目数量
     private void updateEntryIndexCount() {
         entryIndexCount = maxEntryIndex - minEntryIndex + 1;
     }
@@ -157,8 +167,9 @@ public class EntryIndexFile implements Iterable<EntryIndexItem> {
     }
 
     private class EntryIndexIterator implements Iterator<EntryIndexItem> {
-
+        // 条目总数
         private final int entryIndexCount;
+        // 当前索引
         private int currentEntryIndex;
 
         EntryIndexIterator(int entryIndexCount, int minEntryIndex) {
@@ -166,18 +177,21 @@ public class EntryIndexFile implements Iterable<EntryIndexItem> {
             this.currentEntryIndex = minEntryIndex;
         }
 
+        // 是否存在下一条
         @Override
         public boolean hasNext() {
             checkModification();
             return currentEntryIndex <= maxEntryIndex;
         }
 
+        // 检查是否修改
         private void checkModification() {
             if (this.entryIndexCount != EntryIndexFile.this.entryIndexCount) {
                 throw new IllegalStateException("entry index count changed");
             }
         }
 
+        // 获取下一条
         @Override
         public EntryIndexItem next() {
             checkModification();

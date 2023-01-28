@@ -7,6 +7,7 @@ import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.concurrent.*;
 
+// 异步单线程任务执行器
 public class SingleThreadTaskExecutor extends AbstractTaskExecutor {
 
     private final ExecutorService executorService;

@@ -2,8 +2,11 @@ package in.xnnyygn.xraft.core.log.entry;
 
 abstract class AbstractEntry implements Entry {
 
+    // 日志类型
     private final int kind;
+    // 日志索引
     protected final int index;
+    // 日志term
     protected final int term;
 
     AbstractEntry(int kind, int index, int term) {

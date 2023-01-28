@@ -2,9 +2,12 @@ package in.xnnyygn.xraft.core.rpc.message;
 
 import java.io.Serializable;
 
+// 投票RPC响应
 public class RequestVoteResult implements Serializable {
 
+    // 选举term
     private int term;
+    // 是否投票
     private boolean voteGranted;
 
     public RequestVoteResult(int term, boolean voteGranted) {

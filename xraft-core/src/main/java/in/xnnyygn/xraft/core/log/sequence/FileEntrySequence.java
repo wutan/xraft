@@ -14,12 +14,15 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+
+//  获取日志条目或者日志条目视图的类
 @NotThreadSafe
 public class FileEntrySequence extends AbstractEntrySequence {
 
     private final EntryFactory entryFactory = new EntryFactory();
     private final EntriesFile entriesFile;
     private final EntryIndexFile entryIndexFile;
+    // 日志条目缓冲
     private final LinkedList<Entry> pendingEntries = new LinkedList<>();
     private int commitIndex;
 
@@ -86,6 +89,7 @@ public class FileEntrySequence extends AbstractEntrySequence {
     protected List<Entry> doSubList(int fromIndex, int toIndex) {
         List<Entry> result = new ArrayList<>();
 
+        // 结果分为两部分，一部分来自文件，一部分来自缓冲
         // entries from file
         if (!entryIndexFile.isEmpty() && fromIndex <= entryIndexFile.getMaxEntryIndex()) {
             int maxIndex = Math.min(entryIndexFile.getMaxEntryIndex() + 1, toIndex);

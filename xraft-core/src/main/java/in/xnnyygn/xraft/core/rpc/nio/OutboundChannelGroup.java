@@ -21,7 +21,9 @@ class OutboundChannelGroup {
 
     private static final Logger logger = LoggerFactory.getLogger(OutboundChannelGroup.class);
     private final EventLoopGroup workerGroup;
+    // 核心组件和通信组件之间双向依赖问题的PubSub工具
     private final EventBus eventBus;
+    // 当前节点的NodeId
     private final NodeId selfNodeId;
     private final int connectTimeoutMillis;
     private final ConcurrentMap<NodeId, Future<NioChannel>> channelMap = new ConcurrentHashMap<>();

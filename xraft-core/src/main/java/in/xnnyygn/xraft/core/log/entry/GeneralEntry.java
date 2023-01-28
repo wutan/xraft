@@ -1,7 +1,9 @@
 package in.xnnyygn.xraft.core.log.entry;
 
+// 普通文件条目
 public class GeneralEntry extends AbstractEntry {
 
+    // 命令数据
     private final byte[] commandBytes;
 
     public GeneralEntry(int index, int term, byte[] commandBytes) {

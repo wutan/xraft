@@ -15,16 +15,20 @@ import in.xnnyygn.xraft.core.support.TaskExecutor;
  * </p>
  */
 public class NodeContext {
-
+    // 当前结点ID
     private NodeId selfId;
+    // 成员列表
     private NodeGroup group;
     private Log log;
+    // RPC组件接口
     private Connector connector;
+    // 部分角色状态数据存储
     private NodeStore store;
     private Scheduler scheduler;
     private NodeMode mode;
     private NodeConfig config;
     private EventBus eventBus;
+    // 主线程执行器，处理逻辑的执行接口
     private TaskExecutor taskExecutor;
     private TaskExecutor groupConfigChangeTaskExecutor;
 

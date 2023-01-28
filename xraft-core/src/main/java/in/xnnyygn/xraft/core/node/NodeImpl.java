@@ -57,9 +57,12 @@ public class NodeImpl implements Node {
         }
     };
 
+    // 核心组件上下文，用于间接访问其他组件
     private final NodeContext context;
+    // 是否已启动，用于防止重复启动的字段
     @GuardedBy("this")
     private boolean started;
+    // 当前角色及信息
     private volatile AbstractNodeRole role;
     private final List<NodeRoleListener> roleListeners = new CopyOnWriteArrayList<>();
 
@@ -120,11 +123,17 @@ public class NodeImpl implements Node {
         if (started) {
             return;
         }
+        // 自己注册到EventBus，注册自己感兴趣的消息
         context.eventBus().register(this);
+        // 初始化连接器Netty通信
         context.connector().initialize();
 
-        // load term, votedFor from store and become follower
+        /**
+         * load term, votedFor from store and become follower 启动时使用Follower角色
+         *   系统启动时,从NodeStore中读取最后的currentTerm和votedFor
+         */
         NodeStore store = context.store();
+        // 切换角色+设置选举超时
         changeToRole(new FollowerNodeRole(store.getTerm(), store.getVotedFor(), null, scheduleElectionTimeout()));
         started = true;
     }
@@ -292,6 +301,7 @@ public class NodeImpl implements Node {
         // follower: start election
         // candidate: restart election
         int newTerm = role.getTerm() + 1;
+        // 取消定时任务
         role.cancelTimeoutOrTask();
 
         if (context.group().isStandalone()) {
@@ -307,15 +317,17 @@ public class NodeImpl implements Node {
             }
         } else {
             logger.info("start election");
+            // 成为candidate角色
             changeToRole(new CandidateNodeRole(newTerm, scheduleElectionTimeout()));
 
-            // request vote
+            // 发送request vote
             EntryMeta lastEntryMeta = context.log().getLastEntryMeta();
             RequestVoteRpc rpc = new RequestVoteRpc();
             rpc.setTerm(newTerm);
             rpc.setCandidateId(context.selfId());
             rpc.setLastLogIndex(lastEntryMeta.getIndex());
             rpc.setLastLogTerm(lastEntryMeta.getTerm());
+            // listEndPointOfMajorExceptSelf返回除当前节点外的其他节点
             context.connector().sendRequestVote(rpc, context.group().listEndpointOfMajorExceptSelf());
         }
     }
@@ -333,13 +345,15 @@ public class NodeImpl implements Node {
         if (leaderId != null && !leaderId.equals(role.getLeaderId(context.selfId()))) {
             logger.info("current leader is {}, term {}", leaderId, term);
         }
+
+        // 重新创建选举超时定时器或者空定时器，之后的服务器成员列表变更中移除服务器节点时,会涉及不需要设置选举超时的场景
         ElectionTimeout electionTimeout = scheduleElectionTimeout ? scheduleElectionTimeout() : ElectionTimeout.NONE;
         changeToRole(new FollowerNodeRole(term, votedFor, leaderId, electionTimeout));
     }
 
     /**
      * Change role.
-     *
+     *  统一角色变化代码,以及角色变化时同步到NodeStore
      * @param newRole new role
      */
     private void changeToRole(AbstractNodeRole newRole) {
@@ -463,12 +477,14 @@ public class NodeImpl implements Node {
      */
     @Subscribe
     public void onReceiveRequestVoteRpc(RequestVoteRpcMessage rpcMessage) {
+        // 异步线程接收投票结果
         context.taskExecutor().submit(
                 () -> context.connector().replyRequestVote(doProcessRequestVoteRpc(rpcMessage), rpcMessage),
                 LOGGING_FUTURE_CALLBACK
         );
     }
 
+    // 处理投票结果
     private RequestVoteResult doProcessRequestVoteRpc(RequestVoteRpcMessage rpcMessage) {
 
         // skip non-major node, it maybe removed node
@@ -480,27 +496,32 @@ public class NodeImpl implements Node {
         // reply current term if result's term is smaller than current one
         RequestVoteRpc rpc = rpcMessage.get();
         if (rpc.getTerm() < role.getTerm()) {
+            //  如果对方的term比自己小,则不投票并且返回自己的term对象
             logger.debug("term from rpc < current term, don't vote ({} < {})", rpc.getTerm(), role.getTerm());
             return new RequestVoteResult(role.getTerm(), false);
         }
 
         // step down if result's term is larger than current term
+        // 如果对方的term比自己大,则切换成Follower角色
         if (rpc.getTerm() > role.getTerm()) {
+            // 根据日志条目决定是否投票
             boolean voteForCandidate = !context.log().isNewerThan(rpc.getLastLogIndex(), rpc.getLastLogTerm());
             becomeFollower(rpc.getTerm(), (voteForCandidate ? rpc.getCandidateId() : null), null, true);
             return new RequestVoteResult(rpc.getTerm(), voteForCandidate);
         }
 
+        // 如果term相等
         assert rpc.getTerm() == role.getTerm();
         switch (role.getName()) {
             case FOLLOWER:
                 FollowerNodeRole follower = (FollowerNodeRole) role;
                 NodeId votedFor = follower.getVotedFor();
                 // reply vote granted for
-                // 1. not voted and candidate's log is newer than self
-                // 2. voted for candidate
+                // 1. not voted and candidate's log is newer than self  自己尚未投过票，并且对方日志比自己的更新
+                // 2. voted for candidate  自己已经给对方投过票
                 if ((votedFor == null && !context.log().isNewerThan(rpc.getLastLogIndex(), rpc.getLastLogTerm())) ||
                         Objects.equals(votedFor, rpc.getCandidateId())) {
+                    // 投票后需要切换为Follower角色
                     becomeFollower(role.getTerm(), rpc.getCandidateId(), null, true);
                     return new RequestVoteResult(rpc.getTerm(), true);
                 }
@@ -514,6 +535,7 @@ public class NodeImpl implements Node {
     }
 
     /**
+     * 收到投票结果响应
      * Receive request vote result.
      * <p>
      * Source: connector.
@@ -534,22 +556,27 @@ public class NodeImpl implements Node {
 
         // step down if result's term is larger than current term
         if (result.getTerm() > role.getTerm()) {
+            // 如果对象中的term比自己大,那么直接退化成Follower角色
             becomeFollower(result.getTerm(), null, null, true);
             return;
         }
 
         // check role
         if (role.getName() != RoleName.CANDIDATE) {
+            // 如果自己不是Candidate,则忽略
             logger.debug("receive request vote result and current role is not candidate, ignore");
             return;
         }
 
         // do nothing if not vote granted
         if (!result.isVoteGranted()) {
+            // 投票结果没有投票
             return;
         }
 
+        // 当前票数
         int currentVotesCount = ((CandidateNodeRole) role).getVotesCount() + 1;
+        // 节点数
         int countOfMajor = context.group().getCountOfMajor();
         logger.debug("votes count {}, major node count {}", currentVotesCount, countOfMajor);
         role.cancelTimeoutOrTask();
@@ -557,13 +584,15 @@ public class NodeImpl implements Node {
 
             // become leader
             logger.info("become leader, term {}", role.getTerm());
+            // 取消选举超时定时器
             resetReplicatingStates();
+            // 成为Leader角色
             changeToRole(new LeaderNodeRole(role.getTerm(), scheduleLogReplicationTask()));
             context.log().appendEntry(role.getTerm()); // no-op log
             context.connector().resetChannels(); // close all inbound channels
         } else {
 
-            // update votes count
+            // update votes count  修改票数,重新创建新的选举超时定时器
             changeToRole(new CandidateNodeRole(role.getTerm(), currentVotesCount, scheduleElectionTimeout()));
         }
     }
@@ -589,24 +618,26 @@ public class NodeImpl implements Node {
 
         // reply current term if term in rpc is smaller than current term
         if (rpc.getTerm() < role.getTerm()) {
+            // 如果对方的term比自己小,则恢复自己的term
             return new AppendEntriesResult(rpc.getMessageId(), role.getTerm(), false);
         }
 
         // if term in rpc is larger than current term, step down and append entries
         if (rpc.getTerm() > role.getTerm()) {
+            // 如果对方的term比自己大,则退化为Follower节点
             becomeFollower(rpc.getTerm(), null, rpc.getLeaderId(), true);
+            // 并追加日志
             return new AppendEntriesResult(rpc.getMessageId(), rpc.getTerm(), appendEntries(rpc));
         }
 
         assert rpc.getTerm() == role.getTerm();
         switch (role.getName()) {
             case FOLLOWER:
-
                 // reset election timeout and append entries
+                // 设置leaderId并重置选举定时器
                 becomeFollower(rpc.getTerm(), ((FollowerNodeRole) role).getVotedFor(), rpc.getLeaderId(), true);
                 return new AppendEntriesResult(rpc.getMessageId(), rpc.getTerm(), appendEntries(rpc));
             case CANDIDATE:
-
                 // more than one candidate but another node won the election
                 becomeFollower(rpc.getTerm(), null, rpc.getLeaderId(), true);
                 return new AppendEntriesResult(rpc.getMessageId(), rpc.getTerm(), appendEntries(rpc));

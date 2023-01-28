@@ -28,12 +28,18 @@ import java.util.concurrent.Executors;
 public class NioConnector implements Connector {
 
     private static final Logger logger = LoggerFactory.getLogger(NioConnector.class);
+    // Selector的线程池,此处为单线程
     private final NioEventLoopGroup bossNioEventLoopGroup = new NioEventLoopGroup(1);
+    // IO线程池，此处为固定数量的线程池
     private final NioEventLoopGroup workerNioEventLoopGroup;
+    // 是否和上层服务等共享IO线程池
     private final boolean workerGroupShared;
     private final EventBus eventBus;
+    // 节点间通信端口
     private final int port;
+    // 入口channel组
     private final InboundChannelGroup inboundChannelGroup = new InboundChannelGroup();
+    // 出口channel组
     private final OutboundChannelGroup outboundChannelGroup;
     private final ExecutorService executorService = Executors.newCachedThreadPool((r) -> {
         Thread thread = new Thread(r);
@@ -57,11 +63,14 @@ public class NioConnector implements Connector {
         this.workerNioEventLoopGroup = workerNioEventLoopGroup;
         this.workerGroupShared = workerGroupShared;
         this.eventBus = eventBus;
+        // Raft算法的服务端口
         this.port = port;
+        // 分组入口和出口连接,在之后的resetChannels中用到
         outboundChannelGroup = new OutboundChannelGroup(workerNioEventLoopGroup, eventBus, selfNodeId, logReplicationInterval);
     }
 
     // should not call more than once
+    // 初始化Netty通信
     @Override
     public void initialize() {
         ServerBootstrap serverBootstrap = new ServerBootstrap()
@@ -73,6 +82,7 @@ public class NioConnector implements Connector {
                         ChannelPipeline pipeline = ch.pipeline();
                         pipeline.addLast(new Decoder());
                         pipeline.addLast(new Encoder());
+                        // 主体逻辑,针对入口连接
                         pipeline.addLast(new FromRemoteHandler(eventBus, inboundChannelGroup));
                     }
                 });

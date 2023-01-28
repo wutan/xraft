@@ -245,7 +245,7 @@ class NodeGroup {
 
     /**
      * List endpoint of major members except self.
-     *
+     *    返回除当前节点外的其他节点
      * @return endpoints except self
      */
     Set<NodeEndpoint> listEndpointOfMajorExceptSelf() {

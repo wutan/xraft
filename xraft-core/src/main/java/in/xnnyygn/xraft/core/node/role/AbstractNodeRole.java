@@ -2,8 +2,12 @@ package in.xnnyygn.xraft.core.node.role;
 
 import in.xnnyygn.xraft.core.node.NodeId;
 
+/**
+ * 节点角色 公共类
+ */
 public abstract class AbstractNodeRole {
 
+    // 角色名
     private final RoleName name;
     protected final int term;
 
@@ -26,6 +30,7 @@ public abstract class AbstractNodeRole {
 
     public abstract NodeId getLeaderId(NodeId selfId);
 
+    // 取消选举超时或日志复制定时任务 (每个角色至多对应一个超时或定时任务,当一个角色转到另一个角色,必须取消当前超时或定时任务,然后创建新的超时或定时任务)
     public abstract void cancelTimeoutOrTask();
 
     public abstract RoleState getState();

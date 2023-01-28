@@ -4,11 +4,16 @@ import in.xnnyygn.xraft.core.node.NodeId;
 
 import java.io.Serializable;
 
+// 请求投票RPC消息
 public class RequestVoteRpc implements Serializable {
 
+    // 选举term
     private int term;
+    // 候选者节点ID, 一般都是发送者自己
     private NodeId candidateId;
+    // 候选者最后一条日志的索引
     private int lastLogIndex = 0;
+    // 候选者最后一条日志的term
     private int lastLogTerm = 0;
 
     public int getTerm() {

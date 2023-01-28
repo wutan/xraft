@@ -12,12 +12,16 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
+// 是一个同时管理出口和入口的管理器
 abstract class AbstractHandler extends ChannelDuplexHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractHandler.class);
     protected final EventBus eventBus;
+    // 远程节点ID
     NodeId remoteId;
+    // RPC组件中的Channel,非Netty的Channel
     protected Channel channel;
+    // 最后发送的AppendEntriesRpc消息
     private AppendEntriesRpc lastAppendEntriesRpc;
     private InstallSnapshotRpc lastInstallSnapshotRpc;
 
@@ -30,6 +34,7 @@ abstract class AbstractHandler extends ChannelDuplexHandler {
         assert remoteId != null;
         assert channel != null;
 
+        // 判断类型后转发消息
         if (msg instanceof RequestVoteRpc) {
             RequestVoteRpc rpc = (RequestVoteRpc) msg;
             eventBus.post(new RequestVoteRpcMessage(rpc, remoteId, channel));
@@ -61,6 +66,7 @@ abstract class AbstractHandler extends ChannelDuplexHandler {
         }
     }
 
+    //  发送前记录最后一个AppendEntries消息
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         if (msg instanceof AppendEntriesRpc) {

@@ -7,7 +7,7 @@ import in.xnnyygn.xraft.core.node.task.GroupConfigChangeTaskReference;
 import javax.annotation.Nonnull;
 
 /**
- * Node.
+ * Node. 暴露给上层服务的接口
  */
 public interface Node {
 

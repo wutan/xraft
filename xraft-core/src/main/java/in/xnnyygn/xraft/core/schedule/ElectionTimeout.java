@@ -11,12 +11,14 @@ public class ElectionTimeout {
     private static final Logger logger = LoggerFactory.getLogger(ElectionTimeout.class);
     public static final ElectionTimeout NONE = new ElectionTimeout(new NullScheduledFuture());
 
+    // 定时任务future
     private final ScheduledFuture<?> scheduledFuture;
 
     public ElectionTimeout(ScheduledFuture<?> scheduledFuture) {
         this.scheduledFuture = scheduledFuture;
     }
 
+    // 取消任务
     public void cancel() {
         logger.debug("cancel election timeout");
         this.scheduledFuture.cancel(false);

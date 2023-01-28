@@ -9,8 +9,10 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+// 条目工厂
 public class EntryFactory {
 
+    // 创建条目数据
     public Entry create(int kind, int index, int term, byte[] commandBytes) {
         try {
             switch (kind) {

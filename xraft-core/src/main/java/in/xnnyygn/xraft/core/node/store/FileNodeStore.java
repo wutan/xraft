@@ -9,6 +9,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 import java.io.File;
 import java.io.IOException;
 
+// 基于文件的实现
 @NotThreadSafe
 public class FileNodeStore implements NodeStore {
 

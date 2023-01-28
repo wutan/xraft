@@ -9,6 +9,7 @@ import java.util.concurrent.Future;
 
 /**
  * Task executor.
+ *
  */
 public interface TaskExecutor {
 

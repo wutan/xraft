@@ -25,6 +25,7 @@ public interface Log {
     /**
      * Get meta of last entry.
      *
+     * 获取最后一条日志的元信息
      * @return entry meta
      */
     @Nonnull
@@ -32,6 +33,7 @@ public interface Log {
 
     /**
      * Create append entries rpc from log.
+     *  创建AppendEntries消息
      *
      * @param term       current term
      * @param selfId     self node id
@@ -62,6 +64,7 @@ public interface Log {
 
     /**
      * Get next log index.
+     *  获取下一条日志的索引
      *
      * @return next log index
      */
@@ -69,14 +72,14 @@ public interface Log {
 
     /**
      * Get commit index.
-     *
+     * 获取当前的commitIndex
      * @return commit index
      */
     int getCommitIndex();
 
     /**
      * Test if last log self is new than last log of leader.
-     *
+     *  判断对象的lastLogIndex和lastLogTerm是否比自己新
      * @param lastLogIndex last log index
      * @param lastLogTerm  last log term
      * @return true if last log self is newer than last log of leader, otherwise false
@@ -85,7 +88,7 @@ public interface Log {
 
     /**
      * Append a NO-OP log entry.
-     *
+     *  增加一条NO_OP日志
      * @param term current term
      * @return no-op entry
      */
@@ -93,7 +96,7 @@ public interface Log {
 
     /**
      * Append a general log entry.
-     *
+     *  增加一条普通日志
      * @param term    current term
      * @param command command in bytes
      * @return general entry
@@ -102,6 +105,7 @@ public interface Log {
 
     /**
      * Append a log entry for adding node.
+     * 追加来自leader的日志条目
      *
      * @param term            current term
      * @param nodeEndpoints   current node configs
@@ -132,7 +136,7 @@ public interface Log {
 
     /**
      * Advance commit index.
-     *
+     *  推进
      * <p>
      * The log entry with new commit index must be the same term as the one in parameter,
      * otherwise commit index will not change.

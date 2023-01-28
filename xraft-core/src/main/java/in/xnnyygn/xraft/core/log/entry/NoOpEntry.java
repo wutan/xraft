@@ -1,5 +1,6 @@
 package in.xnnyygn.xraft.core.log.entry;
 
+// 空文件条目
 public class NoOpEntry extends AbstractEntry {
 
     public NoOpEntry(int index, int term) {

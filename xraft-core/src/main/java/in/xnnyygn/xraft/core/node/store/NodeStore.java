@@ -5,7 +5,7 @@ import in.xnnyygn.xraft.core.node.NodeId;
 import javax.annotation.Nullable;
 
 /**
- * Node store.
+ * Node store.  存储已投票的节点和currentTerm
  */
 public interface NodeStore {
 

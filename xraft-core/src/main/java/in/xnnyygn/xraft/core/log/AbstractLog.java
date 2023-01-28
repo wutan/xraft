@@ -163,18 +163,23 @@ abstract class AbstractLog implements Log {
         return entry;
     }
 
+
     @Override
     public boolean appendEntriesFromLeader(int prevLogIndex, int prevLogTerm, List<Entry> leaderEntries) {
-        // check previous log
+        // check previous log  检查前一条日志是否匹配
         if (!checkIfPreviousLogMatches(prevLogIndex, prevLogTerm)) {
+            // 追加失败,返回false
             return false;
         }
         // heartbeat
+        // leader节点传递过来的日志条目为空
         if (leaderEntries.isEmpty()) {
             return true;
         }
         assert prevLogIndex + 1 == leaderEntries.get(0).getIndex();
+        // 移除冲突的日志条目并返回接下来要追加的日志条目(如果还有的话)
         EntrySequenceView newEntries = removeUnmatchedLog(new EntrySequenceView(leaderEntries));
+        // 仅追加日志
         appendEntriesFromLeader(newEntries);
         return true;
     }
@@ -339,6 +344,7 @@ abstract class AbstractLog implements Log {
             logger.debug("log of new commit index {} not found", newCommitIndex);
             return false;
         }
+        // 日志条目的term必须是当前term,才可推进commitIndex
         if (entry.getTerm() != currentTerm) {
             logger.debug("log term of new commit index != current term ({} != {})", entry.getTerm(), currentTerm);
             return false;

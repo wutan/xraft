@@ -9,6 +9,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
+// 直接执行是在当前线程中执行和返回
 public class DirectTaskExecutor extends AbstractTaskExecutor {
 
     private final boolean throwWhenFailed;

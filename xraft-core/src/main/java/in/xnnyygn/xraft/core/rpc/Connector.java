@@ -17,11 +17,13 @@ public interface Connector {
      * <p>
      * SHOULD NOT call more than one.
      * </p>
+     *
+     *  初始化
      */
     void initialize();
 
     /**
-     * Send request vote rpc.
+     * Send request vote rpc.  发request vote消息给多个节点
      * <p>
      * Remember to exclude self node before sending.
      * </p>
@@ -35,7 +37,7 @@ public interface Connector {
     void sendRequestVote(@Nonnull RequestVoteRpc rpc, @Nonnull Collection<NodeEndpoint> destinationEndpoints);
 
     /**
-     * Reply request vote result.
+     * Reply request vote result. 回复request vote结果给单个节点
      *
      * @param result     result
      * @param rpcMessage rpc message
@@ -43,7 +45,7 @@ public interface Connector {
     void replyRequestVote(@Nonnull RequestVoteResult result, @Nonnull RequestVoteRpcMessage rpcMessage);
 
     /**
-     * Send append entries rpc.
+     * Send append entries rpc. 发送append entries给单个节点
      *
      * @param rpc                 rpc
      * @param destinationEndpoint destination endpoint
@@ -79,11 +81,13 @@ public interface Connector {
      * <p>
      * Connector may use this chance to close inbound channels.
      * </p>
+     *
+     *  解决重复连接问题,重置连接。节点变成leader节点后,重置连接来减少重复连接的问题。
      */
     void resetChannels();
 
     /**
-     * Close connector.
+     * Close connector. 管理连接器
      */
     void close();
 

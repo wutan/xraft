@@ -7,14 +7,20 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
+//  日志复制
 public class AppendEntriesRpc implements Serializable {
-
+    // 消息ID
     private String messageId;
+    // 选举term
     private int term;
     private NodeId leaderId;
+    // 前一条日志的索引
     private int prevLogIndex = 0;
+    // 前一条日志的term
     private int prevLogTerm;
+    // 复制的日志条目
     private List<Entry> entries = Collections.emptyList();
+    // leader的commitIndex
     private int leaderCommit;
 
     public String getMessageId() {

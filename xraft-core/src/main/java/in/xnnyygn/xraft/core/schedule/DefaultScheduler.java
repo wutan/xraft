@@ -17,11 +17,17 @@ import java.util.concurrent.TimeUnit;
 public class DefaultScheduler implements Scheduler {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultScheduler.class);
+    // 最小选举超时时间
     private final int minElectionTimeout;
+    // 最大选举超时时间
     private final int maxElectionTimeout;
+    // 初次日志复制延迟时间
     private final int logReplicationDelay;
+    // 日志复制间隔
     private final int logReplicationInterval;
+    // 随机数生成器
     private final Random electionTimeoutRandom;
+    // 定时任务类
     private final ScheduledExecutorService scheduledExecutorService;
 
     public DefaultScheduler(NodeConfig config) {
@@ -40,7 +46,9 @@ public class DefaultScheduler implements Scheduler {
         this.maxElectionTimeout = maxElectionTimeout;
         this.logReplicationDelay = logReplicationDelay;
         this.logReplicationInterval = logReplicationInterval;
+        // 随机选举超时时间, 为了减少split vote (偶数节点集群,票数对半分)的影响,在选举超时区间选择一个随机超时时间，而不是固定的超时时间
         electionTimeoutRandom = new Random();
+        // 创建一个一次性的ScheduledFuture
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "scheduler"));
     }
 
@@ -59,6 +67,7 @@ public class DefaultScheduler implements Scheduler {
     public ElectionTimeout scheduleElectionTimeout(@Nonnull Runnable task) {
         Preconditions.checkNotNull(task);
         logger.debug("schedule election timeout");
+        // 随机超时时间 [min,max]之间
         int timeout = electionTimeoutRandom.nextInt(maxElectionTimeout - minElectionTimeout) + minElectionTimeout;
         ScheduledFuture<?> scheduledFuture = scheduledExecutorService.schedule(task, timeout, TimeUnit.MILLISECONDS);
         return new ElectionTimeout(scheduledFuture);

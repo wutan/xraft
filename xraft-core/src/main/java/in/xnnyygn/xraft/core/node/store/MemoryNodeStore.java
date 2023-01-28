@@ -4,6 +4,8 @@ import in.xnnyygn.xraft.core.node.NodeId;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
+
+// 基于内存的实现
 @NotThreadSafe
 public class MemoryNodeStore implements NodeStore {
 

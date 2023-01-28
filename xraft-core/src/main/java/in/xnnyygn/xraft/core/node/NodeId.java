@@ -8,7 +8,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Node id.
+ * Node id.  不可变
  */
 @Immutable
 public class NodeId implements Serializable {

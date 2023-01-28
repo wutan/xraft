@@ -6,6 +6,9 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 日志复制任务
+ */
 public class LogReplicationTask {
 
     public static final LogReplicationTask NONE = new LogReplicationTask(new NullScheduledFuture());

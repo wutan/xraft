@@ -8,13 +8,16 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public class CandidateNodeRole extends AbstractNodeRole {
 
+    // 票数
     private final int votesCount;
     private final ElectionTimeout electionTimeout;
 
+    // 构造函数票数为1 再发起选举并设置为Candidate节点时调用
     public CandidateNodeRole(int term, ElectionTimeout electionTimeout) {
         this(term, 1, electionTimeout);
     }
 
+    // 在收到节点的投票时调用
     public CandidateNodeRole(int term, int votesCount, ElectionTimeout electionTimeout) {
         super(RoleName.CANDIDATE, term);
         this.votesCount = votesCount;

@@ -10,7 +10,7 @@ public interface Scheduler {
 
     /**
      * Schedule log replication task.
-     *
+     *  创建日志复制定时任务
      * @param task task
      * @return log replication task
      */
@@ -19,7 +19,7 @@ public interface Scheduler {
 
     /**
      * Schedule election timeout.
-     *
+     *  创建选举超时器
      * @param task task
      * @return election timeout
      */
@@ -28,7 +28,7 @@ public interface Scheduler {
 
     /**
      * Stop scheduler.
-     *
+     *  关闭定时器
      * @throws InterruptedException if interrupted
      */
     void stop() throws InterruptedException;

@@ -6,6 +6,7 @@ import javax.annotation.Nonnull;
 
 /**
  * Default role state.
+ *    角色状态
  */
 public class DefaultRoleState implements RoleState {
 
